@@ -1,6 +1,6 @@
-package com.secured.assignments.controller;
+package com.secured.assignments.assignment_1.controller;
 
-import com.secured.assignments.model.dto.Product;
+import com.secured.assignments.assignment_1.model.dto.Product;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

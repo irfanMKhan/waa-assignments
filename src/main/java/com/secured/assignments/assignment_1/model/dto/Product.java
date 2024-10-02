@@ -1,4 +1,4 @@
-package com.secured.assignments.model.dto;
+package com.secured.assignments.assignment_1.model.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
