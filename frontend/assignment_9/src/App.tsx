@@ -1,119 +1,94 @@
-
-import "./App.scss";
-import avatar from "./images/bozai.png";
-
-import { useState } from "react";
-import _ from "lodash";
+import { useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import dayjs from "dayjs";
 
-const defaultList = [
-  {
-    rpid: 3,
-    user: { uid: "13258165", avatar: "", uname: "Jay Zhou" },
-    content: "Nice, well done",
-    ctime: "10-18 08:15",
-    like: 88,
-  },
-  {
-    rpid: 2,
-    user: { uid: "36080105", avatar: "", uname: "Song Xu" },
-    content: "I search for you thousands of times, from dawn till dusk.",
-    ctime: "11-13 11:29",
-    like: 88,
-  },
-  {
-    rpid: 1,
-    user: { uid: "30009257", avatar, uname: "John" },
-    content:
-      "I told my computer I needed a break... now it will not stop sending me vacation ads.",
-    ctime: "10-19 09:00",
-    like: 66,
-  },
-];
+import Todo from "./types/Todo";
+import Main from "./components/Main";
+import Header from "./components/Header";
+import Footer from "./components/Footer";
 
-const user = {
-  uid: "30009257",
-  avatar,
-  uname: "John",
-};
+import "./App.css";
 
-const tabs = [
-  { type: "hot", text: "Top" },
-  { type: "newest", text: "Newest" },
-];
+function App() {
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [selectedCount, setSelectedCount] = useState(0);
 
-const App = () => {
-  const [comments, setComments] = useState(defaultList);
-  const [newComment, setNewComment] = useState("");
+  useEffect(() => {
+    //populate todo
+    async function getTodos() {
+      ///https://dummyjson.com/todos'
+      const response = await fetch("http://localhost:3004/todos");
+      const data = await response.json();
+      updateCounts(data);
+    }
 
-  const [activeTab, setActiveTab] = useState("hot");
+    getTodos();
+  }, []);
 
-  const deleteComment = (rpid: number) => {
-    setComments(comments.filter((comment) => comment.rpid !== rpid));
+  const onChangeAll = (isChecked: boolean) => {
+    const newTodos = todos!.map((todo) => {
+      return { ...todo, completed: isChecked };
+    });
+
+    updateCounts(newTodos);
   };
 
-  const postComment = () => {
-    const newCommentItem = {
-      rpid: parseInt(uuidv4()),
-      user: user,
-      content: newComment,
-      ctime: dayjs().format("MM-DD HH:mm"),
-      like: 0,
-    };
+  const addTodo = (task: string) => {
+    const newTodo = {
+      id: uuidv4(),
+      todo: task,
+      completed: false,
+      userId: 1,
+    } as Todo;
 
-    setComments([...comments, newCommentItem]);
-    setNewComment("");
+    updateCounts([newTodo, ...todos]);
   };
 
-  const sortedComments =
-    activeTab === "hot"
-      ? _.orderBy(comments, ["like"], ["desc"])
-      : _.orderBy(comments, ["ctime"], ["desc"]);
+  const onChecked = (id: number | string, completed: boolean) => {
+    const newTodos = todos!.map((todo) => {
+      if (todo.id === id) return { ...todo, completed };
+      else return todo;
+    });
+
+    updateCounts(newTodos);
+  };
+
+  const updateCounts = (newTodos: Todo[]) => {
+    setTodos(newTodos);
+    setTotalCount(newTodos.length);
+    const selectedItems = newTodos.filter((t) => t.completed);
+    setSelectedCount(selectedItems.length);
+  };
+
+  const onDeleteItem = (id: number | string) => {
+    const newTodos = todos!.filter((todo) => {
+      return todo.id !== id;
+    });
+    updateCounts(newTodos);
+  };
+
+  const deleteItems = () => {
+    const newTodos = todos!.filter((todo) => {
+      return !todo.completed;
+    });
+    updateCounts(newTodos);
+  };
 
   return (
-    <div className="app">
-
-      <div className="reply-navigation">
-        <ul className="nav-bar">
-          {tabs.map((tab) => (
-            <li className="nav-title" key={tab.type}>
-              <span
-                className={`nav-item ${activeTab === tab.type ? "active" : ""}`}
-                onClick={() => setActiveTab(tab.type)}
-              >
-                {tab.text}
-              </span>
-            </li>
-          ))}
-        </ul>
+    <div className="todo-container">
+      <div className="todo-wrap">
+        <h1>TODO list workshop</h1>
+        <Header addTodo={addTodo} />
+        <Main todos={todos} onChecked={onChecked} onDelete={onDeleteItem} />
+        <Footer
+          totalCount={totalCount}
+          selectedCount={selectedCount}
+          onChangeAll={onChangeAll}
+          deleteSelectedItems={deleteItems}
+        />
       </div>
-
-      <textarea
-        value={newComment}
-        onChange={(e) => setNewComment(e.target.value)}
-        placeholder="Write your comment..."
-      />
-      <button onClick={postComment}>Post</button>
-
-      {/* Map over the comments array and display them */}
-      {comments.map((comment) => (
-        <div key={comment.rpid} className="reply-item">
-          <div className="user-name">{comment.user.uname}</div>
-          <div className="reply-content">{comment.content}</div>
-          <div className="reply-info">
-            <span className="reply-time">{comment.ctime}</span>
-            <span className="reply-like">Likes: {comment.like}</span>
-            {comment.user.uid === user.uid && (
-              <button onClick={() => deleteComment(comment.rpid)}>
-                Delete
-              </button>
-            )}
-          </div>
-        </div>
-      ))}
     </div>
   );
-};
+}
 
 export default App;
