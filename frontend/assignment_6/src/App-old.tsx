@@ -1,64 +1,77 @@
-import './App.scss'
-import avatar from './images/bozai.png'
+import "./App.scss";
+import avatar from "./images/bozai.png";
 
+import { useState } from "react";
+import _ from "lodash";
+import { v4 as uuidv4 } from "uuid";
+import dayjs from "dayjs";
 
-// Comment List data
 const defaultList = [
   {
-    // comment id
     rpid: 3,
-    // user info
-    user: {
-      uid: '13258165',
-      avatar: '',
-      uname: 'Jay Zhou',
-    },
-    // comment content
-    content: 'Nice, well done',
-    // created datetime
-    ctime: '10-18 08:15',
+    user: { uid: "13258165", avatar: "", uname: "Jay Zhou" },
+
+    content: "Nice, well done",
+
+    ctime: "10-18 08:15",
     like: 88,
   },
   {
     rpid: 2,
-    user: {
-      uid: '36080105',
-      avatar: '',
-      uname: 'Song Xu',
-    },
-    content: 'I search for you thousands of times, from dawn till dusk.',
-    ctime: '11-13 11:29',
+    user: { uid: "36080105", avatar: "", uname: "Song Xu" },
+    content: "I search for you thousands of times, from dawn till dusk.",
+    ctime: "11-13 11:29",
     like: 88,
   },
   {
     rpid: 1,
-    user: {
-      uid: '30009257',
-      avatar,
-      uname: 'John',
-    },
-    content: 'I told my computer I needed a break... now it will not stop sending me vacation ads.',
-    ctime: '10-19 09:00',
+    user: { uid: "30009257", avatar, uname: "John" },
+    content:
+      "I told my computer I needed a break... now it will not stop sending me vacation ads.",
+    ctime: "10-19 09:00",
     like: 66,
   },
-]
-// current logged in user info
-const user = {
-  // userid
-  uid: '30009257',
-  // profile
-  avatar,
-  // username
-  uname: 'John',
-}
+];
 
-// Nav Tab
+const user = {
+  uid: "30009257",
+  avatar,
+  uname: "John",
+};
+
 const tabs = [
-  { type: 'hot', text: 'Top' },
-  { type: 'newest', text: 'Newest' },
-]
+  { type: "hot", text: "Top" },
+  { type: "newest", text: "Newest" },
+];
 
 const App = () => {
+  const [comments, setComments] = useState(defaultList);
+  const [newComment, setNewComment] = useState("");
+
+  const [activeTab, setActiveTab] = useState("hot");
+
+  const deleteComment = (rpid: number) => {
+    setComments(comments.filter((comment) => comment.rpid !== rpid));
+  };
+
+  const postComment = () => {
+    const newCommentItem = {
+      rpid: parseInt(uuidv4()),
+      user: user,
+      content: newComment,
+      ctime: dayjs().format("MM-DD HH:mm"),
+      like: 0,
+    };
+
+    setComments([...comments, newCommentItem]);
+    setNewComment("");
+  };
+
+  const sortedComments =
+    activeTab === "hot"
+      ? _.orderBy(comments, ["like"], ["desc"])
+      : _.orderBy(comments, ["ctime"], ["desc"]);
+
   return (
     <div className="app">
       {/* Nav Tab */}
@@ -71,8 +84,8 @@ const App = () => {
           </li>
           <li className="nav-sort">
             {/* highlight class name： active */}
-            <span className='nav-item'>Top</span>
-            <span className='nav-item'>Newest</span>
+            <span className="nav-item">Top</span>
+            <span className="nav-item">Newest</span>
           </li>
         </ul>
       </div>
@@ -105,10 +118,7 @@ const App = () => {
             {/* profile */}
             <div className="root-reply-avatar">
               <div className="bili-avatar">
-                <img
-                  className="bili-avatar-img"
-                  alt=""
-                />
+                <img className="bili-avatar-img" alt="" />
               </div>
             </div>
 
@@ -122,12 +132,10 @@ const App = () => {
                 <span className="reply-content">This is reply</span>
                 <div className="reply-info">
                   {/* comment created time */}
-                  <span className="reply-time">{'2023-11-11'}</span>
+                  <span className="reply-time">{"2023-11-11"}</span>
                   {/* total likes */}
                   <span className="reply-time">Like:{100}</span>
-                  <span className="delete-btn">
-                    Delete
-                  </span>
+                  <span className="delete-btn">Delete</span>
                 </div>
               </div>
             </div>
@@ -135,7 +143,7 @@ const App = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
