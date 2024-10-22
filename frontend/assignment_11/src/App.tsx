@@ -1,94 +1,96 @@
+import "./App.scss";
+
 import { useEffect, useState } from "react";
+import _ from "lodash";
 import { v4 as uuidv4 } from "uuid";
+import dayjs from "dayjs";
+import { commentType } from "./type";
+import { user, tabs, avatar } from "./sample";
+import NavigationItems from "./components/NavigationItems";
+import { PostComment } from "./components/PostComment";
+import { CommnetList } from "./components/CommentList";
 
-import Todo from "./types/Todo";
-import Main from "./components/Main";
-import Header from "./components/Header";
-import Footer from "./components/Footer";
+const App = () => {
+  const [comments, setComments] = useState<commentType[]>([]);
+  const [newComment, setNewComment] = useState("");
 
-import "./App.css";
+  const [activeTab, setActiveTab] = useState("hot");
 
-function App() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [selectedCount, setSelectedCount] = useState(0);
+  const deleteComment = (rpid: number) => {
+    setComments(comments.filter((comment) => comment.rpid !== rpid));
+  };
+
+  const postComment = () => {
+    const newCommentItem = {
+      rpid: parseInt(uuidv4()),
+      user: user,
+      content: newComment,
+      ctime: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+      like: 0,
+    };
+
+    setComments([...comments, newCommentItem]);
+    setNewComment("");
+  };
 
   useEffect(() => {
-    //populate todo
-    async function getTodos() {
-      ///https://dummyjson.com/todos'
-      const response = await fetch("http://localhost:3004/todos");
-      const data = await response.json();
-      updateCounts(data);
-    }
+    sortedComments();
+  }, [activeTab]);
 
-    getTodos();
+  const sortedComments = () =>
+    activeTab === "hot"
+      ? setComments([..._.orderBy(comments, ["like"], ["desc"])])
+      : setComments([..._.orderBy(comments, ["ctime"], ["desc"])]);
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchComments = async () => {
+      try {
+        const res = await fetch("http://localhost:3004/comments");
+        const data = await res.json();
+        setComments(data);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchComments();
   }, []);
 
-  const onChangeAll = (isChecked: boolean) => {
-    const newTodos = todos!.map((todo) => {
-      return { ...todo, completed: isChecked };
-    });
-
-    updateCounts(newTodos);
-  };
-
-  const addTodo = (task: string) => {
-    const newTodo = {
-      id: uuidv4(),
-      todo: task,
-      completed: false,
-      userId: 1,
-    } as Todo;
-
-    updateCounts([newTodo, ...todos]);
-  };
-
-  const onChecked = (id: number | string, completed: boolean) => {
-    const newTodos = todos!.map((todo) => {
-      if (todo.id === id) return { ...todo, completed };
-      else return todo;
-    });
-
-    updateCounts(newTodos);
-  };
-
-  const updateCounts = (newTodos: Todo[]) => {
-    setTodos(newTodos);
-    setTotalCount(newTodos.length);
-    const selectedItems = newTodos.filter((t) => t.completed);
-    setSelectedCount(selectedItems.length);
-  };
-
-  const onDeleteItem = (id: number | string) => {
-    const newTodos = todos!.filter((todo) => {
-      return todo.id !== id;
-    });
-    updateCounts(newTodos);
-  };
-
-  const deleteItems = () => {
-    const newTodos = todos!.filter((todo) => {
-      return !todo.completed;
-    });
-    updateCounts(newTodos);
-  };
+  if (loading) {
+    return <div>Loading comments...</div>;
+  }
 
   return (
-    <div className="todo-container">
-      <div className="todo-wrap">
-        <h1>TODO list workshop</h1>
-        <Header addTodo={addTodo} />
-        <Main todos={todos} onChecked={onChecked} onDelete={onDeleteItem} />
-        <Footer
-          totalCount={totalCount}
-          selectedCount={selectedCount}
-          onChangeAll={onChangeAll}
-          deleteSelectedItems={deleteItems}
-        />
+    <div className="app">
+      {/* Nav Tab */}
+      <NavigationItems
+        tabs={tabs}
+        setActiveTab={setActiveTab}
+      ></NavigationItems>
+
+      <div className="reply-wrap">
+        {/* comments */}
+        <PostComment
+          avatar={avatar}
+          newComment={newComment}
+          setNewComment={setNewComment}
+          postComment={postComment}
+        ></PostComment>
+
+        {/* comment list */}
+
+        <CommnetList
+          comments={comments}
+          user={user}
+          deleteComment={deleteComment}
+        ></CommnetList>
       </div>
     </div>
   );
-}
+};
 
 export default App;
